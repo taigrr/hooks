@@ -3,7 +3,8 @@ set +eou pipefail
 size_limit=$((5 * 2**20))
 # make sure we have at least 1 commit in the repo
 # so we don't fail on the first commit
-test "$(git rev-list --count HEAD 2>/dev/null)" -gt 1 2> /dev/null > /dev/null || exit 0
+test "$(git rev-list --count HEAD 2>/dev/null)" -gt 1 2> /dev/null > /dev/null || \
+	gitleaks protect --verbose --redact --staged && exit 0
 
 repo_root=$(git rev-parse --show-toplevel)
 pushd $repo_root 2>/dev/null > /dev/null
