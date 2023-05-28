@@ -1,39 +1,31 @@
 #!/usr/bin/env bash
 set +eou pipefail
 size_limit=$((5 * 2**20))
-# make sure we have at least 1 commit in the repo
-# so we don't fail on the first commit
-if [ "$(git rev-list --count HEAD 2>/dev/null)" -lt 2 2> /dev/null > /dev/null ]; then
-	gitleaks protect --staged --verbose --no-banner --no-color 
-	exit 0 
-fi
-
 
 repo_root=$(git rev-parse --show-toplevel)
-pushd $repo_root 2>/dev/null > /dev/null
-empty_tree=$(git hash-object -t tree /dev/null)
+pushd "$repo_root" 2>/dev/null > /dev/null || true
+empty=$(git hash-object -t tree /dev/null)
 if git rev-parse --verify HEAD > /dev/null 2>&1
 then
 	against=HEAD
 else
-	against="$empty_tree"
+	against="$empty"
 fi
 IFS='
 '
 hasLargeFile=false
-for file in $(git diff-index --cached --name-only $against); do
-	file_size=$(([ ! -f $file ] && echo 0) || (ls -la $file | awk '{ print $5 }'))
+for file in $(git diff-index --cached --name-only "$against"); do
+	file_size=$( ([ ! -f "$file" ] && echo 0) || find . -name "$file" -printf "%s" )
 	if [ "$file_size" -gt  "$size_limit" ]; then
-		echo File $file is $(( $file_size / 10**6 )) MB, which is larger than our configured limit of $(( $size_limit / 10**6 )) MB
+		echo File "$file" is "$(( file_size / 10**6 ))"MB, which is larger than our configured limit of "$(( size_limit / 10**6 ))"MB
 		hasLargeFile=true
 	fi
 done
 
 if $hasLargeFile; then
 	echo Commit too large, did you add a binary file? For image assets, consider git-lfs.
-	popd $repo_root 2>/dev/null > /dev/null
+	popd "$repo_root" 2>/dev/null > /dev/null || true
 	exit 1
 fi
-popd $repo_root 2>/dev/null > /dev/null || true
+popd "$repo_root" 2>/dev/null > /dev/null || true
 gitleaks protect --staged --verbose --no-banner --no-color 2>/dev/null
-
