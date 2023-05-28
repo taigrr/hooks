@@ -13,9 +13,16 @@ else
 fi
 IFS='
 '
+tracked=$(git lfs ls-files --name-only)
 hasLargeFile=false
 for file in $(git diff-index --cached --name-only "$against"); do
-	file_size=$( ([ ! -f "$file" ] && echo 0) || find . -name "$file" -printf "%s" )
+	for tracked_file in $tracked; do
+		if [ "$file" == "$tracked_file" ]; then
+			continue 2
+		fi
+	done
+	# shellcheck disable=SC2012
+	file_size=$( ([ ! -f "$file" ] && echo 0) || ls -la "$file" | awk '{ print $5 }' )
 	if [ "$file_size" -gt  "$size_limit" ]; then
 		echo File "$file" is "$(( file_size / 10**6 ))"MB, which is larger than our configured limit of "$(( size_limit / 10**6 ))"MB
 		hasLargeFile=true
