@@ -25,7 +25,7 @@
 #zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
 
 
-mg register >/dev/null 2> /dev/null || { echo >&2 "\nThis repository is configured for mg but 'mg' was not found on your path. Install it with go install github.com/taigrr/mg/cmd/mg@latest or remove this code from your templates in ~/.config/git/hooks.\n"; exit 2; }
+which mg >/dev/null 2> /dev/null || { echo >&2 "\nThis repository is configured for mg but 'mg' was not found on your path. Install it with go install github.com/taigrr/mg/cmd/mg@latest or remove this code from your templates in ~/.config/git/hooks.\n"; exit 2; } && mg register >/dev/null &
 
 command -v git-lfs >/dev/null 2>&1 || { echo >&2 "\nThis repository is configured for Git LFS but 'git-lfs' was not found on your path. If you no longer wish to use Git LFS, remove this hook by deleting '.git/hooks/pre-push' and your templates in ~/.config/git/hooks.\n"; exit 2; }
 git lfs pre-push "$@"
