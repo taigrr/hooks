@@ -31,8 +31,8 @@ a couple of annoying blunders:
 1. Scan the staged files for added secrets (using the fantastic gitleaks tool)
 1. On a push, register the repo with Magnesium, (mg) my git repos management cli.
 
-### Installation
-## Template Installation
+## Installation
+### Template Installation
 1. Clone this repo somewhere on your system.
 1. Configure git to use these hooks as your template hook directory by adding this line to your global git config: `git config --global init.templatedir` 
 
