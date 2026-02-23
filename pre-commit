@@ -3,36 +3,40 @@ set +eou pipefail
 size_limit=$((5 * 2**20))
 
 repo_root=$(git rev-parse --show-toplevel)
-pushd "$repo_root" 2>/dev/null > /dev/null || true
+pushd "$repo_root" > /dev/null 2>&1 || true
+
 empty=$(git hash-object -t tree /dev/null)
-if git rev-parse --verify HEAD > /dev/null 2>&1
-then
+if git rev-parse --verify HEAD > /dev/null 2>&1; then
 	against=HEAD
 else
 	against="$empty"
 fi
-IFS='
-'
-tracked=$(git lfs ls-files --name-only)
+
+IFS=$'\n'
+tracked=$(git lfs ls-files --name-only 2>/dev/null)
 hasLargeFile=false
+
 for file in $(git diff-index --cached --name-only "$against"); do
 	for tracked_file in $tracked; do
 		if [ "$file" == "$tracked_file" ]; then
 			continue 2
 		fi
 	done
-	# shellcheck disable=SC2012
-	file_size=$( ([ ! -f "$file" ] && echo 0) || ls -la "$file" | awk '{ print $5 }' )
-	if [ "$file_size" -gt  "$size_limit" ]; then
-		echo File "$file" is "$(( file_size / 10**6 ))"MB, which is larger than our configured limit of "$(( size_limit / 10**6 ))"MB
+	if [ ! -f "$file" ]; then
+		continue
+	fi
+	file_size=$(stat --format='%s' "$file" 2>/dev/null || stat -f '%z' "$file" 2>/dev/null || echo 0)
+	if [ "$file_size" -gt "$size_limit" ]; then
+		echo "File $file is $((file_size / 10**6))MB, which is larger than our configured limit of $((size_limit / 10**6))MB"
 		hasLargeFile=true
 	fi
 done
 
 if $hasLargeFile; then
-	echo Commit too large, did you add a binary file? For image assets, consider git-lfs.
-	popd "$repo_root" 2>/dev/null > /dev/null || true
+	echo "Commit too large, did you add a binary file? For image assets, consider git-lfs."
+	popd > /dev/null 2>&1 || true
 	exit 1
 fi
-popd "$repo_root" 2>/dev/null > /dev/null || true
+
+popd > /dev/null 2>&1 || true
 gitleaks protect --staged --verbose --no-banner --no-color 2>/dev/null
