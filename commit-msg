@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Validates conventional commit format: type(scope): description
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+# Optional ! for breaking changes: feat(api)!: change response format
+# Merge commits and fixup/squash commits are always allowed.
+
+msg_file="$1"
+msg=$(head -1 "$msg_file")
+
+# Allow merge commits
+if echo "$msg" | grep -qE '^Merge '; then
+	exit 0
+fi
+
+# Allow fixup/squash commits
+if echo "$msg" | grep -qE '^(fixup|squash)! '; then
+	exit 0
+fi
+
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_/-]+\))?!?: .+'
+
+if ! echo "$msg" | grep -qE "$pattern"; then
+	echo "ERROR: Commit message does not follow Conventional Commits format."
+	echo ""
+	echo "  Expected: <type>(<scope>): <description>"
+	echo "  Types:    feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+	echo "  Example:  feat(auth): add OAuth2 support"
+	echo "  Breaking: feat(api)!: change response format"
+	echo ""
+	echo "  Your message: $msg"
+	exit 1
+fi

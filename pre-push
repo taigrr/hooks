@@ -1,5 +1,5 @@
 #!/bin/sh
 
-mg register >/dev/null &
+mg register >/dev/null 2>&1 &
 test "$(git lfs track | wc -l)" -gt 0 || exit 0
 git lfs pre-push "$@"
