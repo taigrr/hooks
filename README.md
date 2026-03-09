@@ -15,7 +15,7 @@ is an annoying extra step, so `git lfs track` is used to short-circuit this logi
 
 - [git](https://git-scm.com/)
 - [git-lfs](https://git-lfs.github.com/)
-- [gitleaks](https://github.com/gitleaks/gitleaks)
+- [gitleaks](https://github.com/gitleaks/gitleaks) (optional, for secret scanning)
 - [mg](https://github.com/taigrr/mg) (optional, for repo registration on push)
 
 ## What these hooks do
@@ -29,8 +29,9 @@ a couple of annoying blunders:
 
 | Hook | What it does |
 |------|-------------|
-| `pre-commit` | Blocks commits containing files over 5 MB (unless tracked by LFS) |
-| `pre-commit` | Scans staged files for leaked secrets via gitleaks |
+| `pre-commit` | Blocks commits containing files over 5 MiB (unless tracked by LFS) |
+| `pre-commit` | Scans staged files for leaked secrets via gitleaks (skipped if gitleaks not installed) |
+| `commit-msg` | Validates [Conventional Commits](https://www.conventionalcommits.org/) format |
 | `post-checkout` | Runs `git lfs post-checkout` |
 | `post-commit` | Runs `git lfs post-commit` |
 | `post-merge` | Runs `git lfs post-merge` |
@@ -78,11 +79,33 @@ git config core.hooksPath /path/to/other/hooks
 
 ## Configuration
 
-The file size limit in `pre-commit` defaults to **5 MB**. To change it, edit the
+### File size limit
+
+The file size limit in `pre-commit` defaults to **5 MiB**. To change it, edit the
 `size_limit` variable at the top of the `pre-commit` file:
 
 ```bash
-size_limit=$((10 * 2**20))  # 10 MB
+size_limit=$((10 * 2**20))  # 10 MiB
+```
+
+### Conventional Commits
+
+The `commit-msg` hook enforces [Conventional Commits](https://www.conventionalcommits.org/)
+format on your commit messages:
+
+```
+<type>(<scope>): <description>
+```
+
+Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
+`ci`, `chore`, `revert`. Add `!` after the type/scope for breaking changes.
+
+Merge commits and fixup/squash commits are always allowed.
+
+To disable this hook for a single commit:
+
+```bash
+git commit --no-verify -m "whatever"
 ```
 
 ## Compatibility Notice
