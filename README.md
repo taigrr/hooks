@@ -39,42 +39,39 @@ a couple of annoying blunders:
 
 ## Installation
 
-### Quick Install
+### Quick Install (recommended)
 
 ```bash
 git clone https://github.com/taigrr/hooks.git ~/.git-hooks
-git config --global core.hooksPath ~/.git-hooks
+cd ~/.git-hooks && ./install.sh
+```
+
+This sets `core.hooksPath` so **all** repos use these hooks. Updates to the
+hooks directory apply everywhere immediately.
+
+To override hooks for a specific repo:
+
+```bash
+cd /path/to/repo
+git config core.hooksPath /path/to/other/hooks
 ```
 
 ### Template Installation
 
-Use this if you want new repos to get a *copy* of the hooks at clone/init time:
+Use this if you only want **new** repos (created with `git init` or `git clone`)
+to receive a copy of these hooks:
 
 ```bash
 git clone https://github.com/taigrr/hooks.git ~/.git-hooks
-git config --global init.templatedir ~/.git-hooks
+cd ~/.git-hooks && ./install.sh --template
 ```
 
-> **Note:** Existing repos won't be affected — only newly cloned or initialized repos
-> will receive the hooks.
+> **Note:** Existing repos won't be affected.
 
-### Central Management Installation
-
-Use this if you want *all* repos (existing and new) to use the same hooks directory:
+### Uninstall
 
 ```bash
-git clone https://github.com/taigrr/hooks.git ~/.git-hooks
-git config --global core.hooksPath ~/.git-hooks
-```
-
-This has the benefit of updating the hooks for all repos when you make a change,
-instead of only new repos going forward, but will require you to specify manual
-overrides for individual repos with customized hooks:
-
-```bash
-# Override for a specific repo
-cd /path/to/repo
-git config core.hooksPath /path/to/other/hooks
+cd ~/.git-hooks && ./uninstall.sh
 ```
 
 ## Configuration
