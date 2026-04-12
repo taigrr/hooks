@@ -18,6 +18,6 @@ jobs:
       - name: Install ShellCheck
         run: sudo apt-get install -y shellcheck
 
-      - name: Run ShellCheck on all hooks
+      - name: Run ShellCheck on all shell scripts
         run: |
-          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge
+          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge install.sh uninstall.sh

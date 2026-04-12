@@ -68,6 +68,14 @@ cd ~/.git-hooks && ./install.sh --template
 
 > **Note:** Existing repos won't be affected.
 
+### Check Status
+
+See what's currently configured without changing anything:
+
+```bash
+cd ~/.git-hooks && ./install.sh --check
+```
+
 ### Uninstall
 
 ```bash
