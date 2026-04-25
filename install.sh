@@ -7,8 +7,41 @@
 set -euo pipefail
 
 hook_dir="$(cd "$(dirname "$0")" && pwd)"
+use_template=false
+check_only=false
 
-if [ "${1:-}" = "--check" ]; then
+usage() {
+	cat <<EOF
+Usage: ./install.sh [--template] [--check] [--help]
+
+Options:
+  --template  Use init.templateDir instead of core.hooksPath
+  --check     Show current hooks configuration without changing anything
+  --help      Show this help text
+EOF
+}
+
+for arg in "$@"; do
+	case "$arg" in
+		--template)
+			use_template=true
+			;;
+		--check)
+			check_only=true
+			;;
+		--help|-h)
+			usage
+			exit 0
+			;;
+		*)
+			echo "Unknown option: $arg" >&2
+			usage >&2
+			exit 1
+			;;
+	esac
+done
+
+if [ "$check_only" = true ]; then
 	hooks_path=$(git config --global --get core.hooksPath 2>/dev/null || true)
 	template_dir=$(git config --global --get init.templateDir 2>/dev/null || true)
 	if [ -n "$hooks_path" ]; then
@@ -33,7 +66,7 @@ if [ "${1:-}" = "--check" ]; then
 	exit 0
 fi
 
-if [ "${1:-}" = "--template" ]; then
+if [ "$use_template" = true ]; then
 	git config --global init.templateDir "$hook_dir"
 	echo "Installed: init.templateDir set to $hook_dir"
 	echo "New repos created with git init/clone will copy these hooks."

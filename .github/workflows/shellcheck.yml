@@ -20,4 +20,7 @@ jobs:
 
       - name: Run ShellCheck on all shell scripts
         run: |
-          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge install.sh uninstall.sh
+          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge install.sh uninstall.sh test/install_test.sh
+
+      - name: Run install script regression tests
+        run: bash test/install_test.sh

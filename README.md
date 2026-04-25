@@ -76,6 +76,8 @@ See what's currently configured without changing anything:
 cd ~/.git-hooks && ./install.sh --check
 ```
 
+`--check` can be combined with other flags like `--template` to inspect what would be used without changing your git config.
+
 ### Uninstall
 
 ```bash
