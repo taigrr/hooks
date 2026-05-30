@@ -55,8 +55,24 @@ assert_unset init.templateDir
 
 output=$(run 0 bash "$install_script" --template)
 assert_contains "$output" "Installed: init.templateDir set to $repo_root"
+assert_contains "$output" "Cleared global core.hooksPath to avoid conflicting hook configuration."
 template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
 [ "$template_dir" = "$repo_root" ]
+assert_unset core.hooksPath
+
+output=$(run 0 bash "$install_script")
+assert_contains "$output" "Installed: core.hooksPath set to $repo_root"
+assert_contains "$output" "Cleared global init.templateDir to avoid conflicting hook configuration."
+hooks_path=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get core.hooksPath)
+[ "$hooks_path" = "$repo_root" ]
+assert_unset init.templateDir
+
+output=$(run 0 bash "$install_script" --template)
+assert_contains "$output" "Installed: init.templateDir set to $repo_root"
+assert_contains "$output" "Cleared global core.hooksPath to avoid conflicting hook configuration."
+template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
+[ "$template_dir" = "$repo_root" ]
+assert_unset core.hooksPath
 
 output=$(run 1 bash "$install_script" --bogus)
 assert_contains "$output" "Unknown option: --bogus"

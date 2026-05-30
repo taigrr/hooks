@@ -47,7 +47,8 @@ cd ~/.git-hooks && ./install.sh
 ```
 
 This sets `core.hooksPath` so **all** repos use these hooks. Updates to the
-hooks directory apply everywhere immediately.
+hooks directory apply everywhere immediately. If `init.templateDir` was set
+previously, `install.sh` clears it to avoid conflicting global hook settings.
 
 To override hooks for a specific repo:
 
@@ -67,6 +68,9 @@ cd ~/.git-hooks && ./install.sh --template
 ```
 
 > **Note:** Existing repos won't be affected.
+>
+> Running `./install.sh --template` clears any existing global `core.hooksPath`
+> so you do not end up with both installation modes configured at once.
 
 ### Check Status
 
