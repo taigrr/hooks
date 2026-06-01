@@ -88,6 +88,8 @@ cd ~/.git-hooks && ./install.sh --check
 cd ~/.git-hooks && ./uninstall.sh
 ```
 
+`uninstall.sh` only clears global settings that still point at this hooks directory, so unrelated custom hook paths are left alone.
+
 ## Configuration
 
 ### File size limit

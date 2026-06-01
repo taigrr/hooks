@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 install_script="$repo_root/install.sh"
+uninstall_script="$repo_root/uninstall.sh"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
@@ -45,6 +46,17 @@ assert_unset() {
 	fi
 }
 
+assert_set_to() {
+	local key="$1"
+	local expected="$2"
+	local actual
+	actual=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get "$key")
+	if [ "$actual" != "$expected" ]; then
+		echo "expected $key to be $expected, got $actual" >&2
+		exit 1
+	fi
+}
+
 output=$(run 0 bash "$install_script" --check)
 assert_contains "$output" "No global hooks configuration found."
 
@@ -77,7 +89,21 @@ assert_unset core.hooksPath
 output=$(run 1 bash "$install_script" --bogus)
 assert_contains "$output" "Unknown option: --bogus"
 
+output=$(run 0 bash "$uninstall_script")
+assert_contains "$output" "Removed init.templateDir"
+assert_contains "$output" "Global hooks configuration cleared."
+assert_unset init.templateDir
+
+GIT_CONFIG_GLOBAL="$global_config" git config --global core.hooksPath /tmp/other-hooks
+GIT_CONFIG_GLOBAL="$global_config" git config --global init.templateDir /tmp/other-template
+output=$(run 0 bash "$uninstall_script")
+assert_contains "$output" "Left core.hooksPath unchanged: /tmp/other-hooks"
+assert_contains "$output" "Left init.templateDir unchanged: /tmp/other-template"
+assert_contains "$output" "No global hooks configuration found for $repo_root."
+assert_set_to core.hooksPath /tmp/other-hooks
+assert_set_to init.templateDir /tmp/other-template
+
 output=$(run 0 bash "$install_script" --help)
 assert_contains "$output" "Usage: ./install.sh"
 
-echo "install.sh regression tests passed"
+echo "install/uninstall regression tests passed"
