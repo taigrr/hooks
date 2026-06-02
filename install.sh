@@ -67,11 +67,15 @@ if [ "$check_only" = true ]; then
 fi
 
 if [ "$use_template" = true ]; then
+	git config --global --unset core.hooksPath >/dev/null 2>&1 || true
 	git config --global init.templateDir "$hook_dir"
 	echo "Installed: init.templateDir set to $hook_dir"
 	echo "New repos created with git init/clone will copy these hooks."
+	echo "Cleared global core.hooksPath to avoid conflicting hook configuration."
 else
+	git config --global --unset init.templateDir >/dev/null 2>&1 || true
 	git config --global core.hooksPath "$hook_dir"
 	echo "Installed: core.hooksPath set to $hook_dir"
 	echo "All repos will use hooks from $hook_dir."
+	echo "Cleared global init.templateDir to avoid conflicting hook configuration."
 fi
