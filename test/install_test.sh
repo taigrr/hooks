@@ -67,21 +67,20 @@ assert_unset init.templateDir
 
 output=$(run 0 bash "$install_script" --template)
 assert_contains "$output" "Installed: init.templateDir set to $repo_root"
-assert_contains "$output" "Cleared global core.hooksPath to avoid conflicting hook configuration."
 template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
 [ "$template_dir" = "$repo_root" ]
 assert_unset core.hooksPath
 
 output=$(run 0 bash "$install_script")
 assert_contains "$output" "Installed: core.hooksPath set to $repo_root"
-assert_contains "$output" "Cleared global init.templateDir to avoid conflicting hook configuration."
+assert_contains "$output" "Cleared global init.templateDir (it pointed to this directory)."
 hooks_path=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get core.hooksPath)
 [ "$hooks_path" = "$repo_root" ]
 assert_unset init.templateDir
 
 output=$(run 0 bash "$install_script" --template)
 assert_contains "$output" "Installed: init.templateDir set to $repo_root"
-assert_contains "$output" "Cleared global core.hooksPath to avoid conflicting hook configuration."
+assert_contains "$output" "Cleared global core.hooksPath (it pointed to this directory)."
 template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
 [ "$template_dir" = "$repo_root" ]
 assert_unset core.hooksPath
@@ -102,6 +101,16 @@ assert_contains "$output" "Left init.templateDir unchanged: /tmp/other-template"
 assert_contains "$output" "No global hooks configuration found for $repo_root."
 assert_set_to core.hooksPath /tmp/other-hooks
 assert_set_to init.templateDir /tmp/other-template
+
+# Safety: a foreign core.hooksPath (not this dir) must be preserved, not clobbered.
+run 0 bash "$uninstall_script" >/dev/null
+GIT_CONFIG_GLOBAL="$global_config" git config --global core.hooksPath /tmp/other-hooks
+output=$(run 0 bash "$install_script" --template)
+assert_contains "$output" "WARNING: global core.hooksPath = /tmp/other-hooks is set and may conflict."
+assert_set_to core.hooksPath /tmp/other-hooks
+assert_set_to init.templateDir "$repo_root"
+run 0 bash "$uninstall_script" >/dev/null
+GIT_CONFIG_GLOBAL="$global_config" git config --global --unset core.hooksPath >/dev/null 2>&1 || true
 
 output=$(run 0 bash "$install_script" --help)
 assert_contains "$output" "Usage: ./install.sh"

@@ -69,8 +69,10 @@ cd ~/.git-hooks && ./install.sh --template
 
 > **Note:** Existing repos won't be affected.
 >
-> Running `./install.sh --template` clears any existing global `core.hooksPath`
-> so you do not end up with both installation modes configured at once.
+> Running `./install.sh --template` clears an existing global `core.hooksPath`
+> only if it already points at this directory, so you do not end up with both
+> installation modes configured at once. A `core.hooksPath` pointing elsewhere
+> (e.g. another hook manager) is left untouched and you are warned about it.
 
 ### Check Status
 

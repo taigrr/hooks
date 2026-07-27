@@ -63,19 +63,40 @@ if [ "$check_only" = true ]; then
 	if [ -z "$hooks_path" ] && [ -z "$template_dir" ]; then
 		echo "No global hooks configuration found."
 	fi
+	if [ "$use_template" = true ]; then
+		echo "Would set: init.templateDir = $hook_dir (and clear a matching core.hooksPath)"
+	else
+		echo "Would set: core.hooksPath = $hook_dir (and clear a matching init.templateDir)"
+	fi
 	exit 0
 fi
 
+# Clear the *other* mechanism only when it points at this directory, so we never
+# silently delete a user's unrelated hook manager or template configuration.
+clear_conflicting() {
+	local key="$1"
+	local current
+	current=$(git config --global --get "$key" 2>/dev/null || true)
+	if [ -z "$current" ]; then
+		return
+	fi
+	if [ "$current" = "$hook_dir" ]; then
+		git config --global --unset "$key" >/dev/null 2>&1 || true
+		echo "Cleared global $key (it pointed to this directory)."
+	else
+		echo "WARNING: global $key = $current is set and may conflict." >&2
+		echo "         Leaving it untouched; unset it manually if needed." >&2
+	fi
+}
+
 if [ "$use_template" = true ]; then
-	git config --global --unset core.hooksPath >/dev/null 2>&1 || true
+	clear_conflicting core.hooksPath
 	git config --global init.templateDir "$hook_dir"
 	echo "Installed: init.templateDir set to $hook_dir"
 	echo "New repos created with git init/clone will copy these hooks."
-	echo "Cleared global core.hooksPath to avoid conflicting hook configuration."
 else
-	git config --global --unset init.templateDir >/dev/null 2>&1 || true
+	clear_conflicting init.templateDir
 	git config --global core.hooksPath "$hook_dir"
 	echo "Installed: core.hooksPath set to $hook_dir"
 	echo "All repos will use hooks from $hook_dir."
-	echo "Cleared global init.templateDir to avoid conflicting hook configuration."
 fi
