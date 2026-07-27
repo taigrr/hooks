@@ -112,6 +112,13 @@ assert_set_to init.templateDir "$repo_root"
 run 0 bash "$uninstall_script" >/dev/null
 GIT_CONFIG_GLOBAL="$global_config" git config --global --unset core.hooksPath >/dev/null 2>&1 || true
 
+# Safety: overwriting a foreign value of the SAME mechanism warns (but proceeds).
+GIT_CONFIG_GLOBAL="$global_config" git config --global core.hooksPath /tmp/other-hooks
+output=$(run 0 bash "$install_script")
+assert_contains "$output" "WARNING: overwriting existing global core.hooksPath = /tmp/other-hooks"
+assert_set_to core.hooksPath "$repo_root"
+run 0 bash "$uninstall_script" >/dev/null
+
 output=$(run 0 bash "$install_script" --help)
 assert_contains "$output" "Usage: ./install.sh"
 

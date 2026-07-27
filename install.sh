@@ -89,14 +89,26 @@ clear_conflicting() {
 	fi
 }
 
+# Warn (but proceed) when the key we are about to set already holds a foreign
+# value, so the user can recover the overwritten path if it was intentional.
+set_hook_config() {
+	local key="$1"
+	local current
+	current=$(git config --global --get "$key" 2>/dev/null || true)
+	if [ -n "$current" ] && [ "$current" != "$hook_dir" ]; then
+		echo "WARNING: overwriting existing global $key = $current" >&2
+	fi
+	git config --global "$key" "$hook_dir"
+}
+
 if [ "$use_template" = true ]; then
 	clear_conflicting core.hooksPath
-	git config --global init.templateDir "$hook_dir"
+	set_hook_config init.templateDir
 	echo "Installed: init.templateDir set to $hook_dir"
 	echo "New repos created with git init/clone will copy these hooks."
 else
 	clear_conflicting init.templateDir
-	git config --global core.hooksPath "$hook_dir"
+	set_hook_config core.hooksPath
 	echo "Installed: core.hooksPath set to $hook_dir"
 	echo "All repos will use hooks from $hook_dir."
 fi
