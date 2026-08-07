@@ -20,7 +20,7 @@ jobs:
 
       - name: Run ShellCheck on all shell scripts
         run: |
-          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge install.sh uninstall.sh test/install_test.sh test/commit_msg_test.sh test/pre_commit_test.sh
+          shellcheck pre-commit commit-msg pre-push post-checkout post-commit post-merge install.sh uninstall.sh test/install_test.sh test/commit_msg_test.sh test/lfs_hooks_test.sh test/pre_commit_test.sh
 
       - name: Run install script regression tests
         run: bash test/install_test.sh
@@ -30,3 +30,6 @@ jobs:
 
       - name: Run pre-commit regression tests
         run: bash test/pre_commit_test.sh
+
+      - name: Run LFS hook regression tests
+        run: bash test/lfs_hooks_test.sh
