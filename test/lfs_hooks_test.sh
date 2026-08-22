@@ -74,8 +74,17 @@ lfsbin="$tmpdir/lfsbin"
 mkdir -p "$lfsbin"
 ln -s "$(command -v sh)" "$lfsbin/sh"
 ln -s "$(command -v git)" "$lfsbin/git"
+if command -v wc >/dev/null 2>&1; then
+	ln -s "$(command -v wc)" "$lfsbin/wc"
+fi
+# Fake git-lfs: `track` reports a tracked pattern (so pre-push's wc -l gate
+# passes); every other subcommand records its full delegated arg list.
 cat >"$lfsbin/git-lfs" <<EOF
 #!/bin/sh
+if [ "\$1" = track ]; then
+	echo '*.bin filter=lfs'
+	exit 0
+fi
 printf '%s' "\$*" >"$tmpdir/lfs.log"
 EOF
 chmod +x "$lfsbin/git-lfs"
@@ -83,5 +92,6 @@ chmod +x "$lfsbin/git-lfs"
 run_with_git_lfs post-checkout
 run_with_git_lfs post-commit
 run_with_git_lfs post-merge
+run_with_git_lfs pre-push
 
 echo "lfs hook regression tests passed"
