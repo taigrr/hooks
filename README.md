@@ -14,7 +14,7 @@ is an annoying extra step, so `git lfs track` is used to short-circuit this logi
 ## Prerequisites
 
 - [git](https://git-scm.com/)
-- [git-lfs](https://git-lfs.github.com/)
+- [git-lfs](https://git-lfs.github.com/) (optional, for repos using LFS)
 - [gitleaks](https://github.com/gitleaks/gitleaks) (optional, for secret scanning)
 - [mg](https://github.com/taigrr/mg) (optional, for repo registration on push)
 
