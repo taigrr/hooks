@@ -32,6 +32,16 @@ assert_contains() {
 	fi
 }
 
+assert_file_contains() {
+	local file="$1"
+	local needle="$2"
+	if ! grep -Fq "$needle" "$file"; then
+		echo "expected $file to contain: $needle" >&2
+		cat "$file" >&2
+		exit 1
+	fi
+}
+
 cd "$tmpdir"
 git init --quiet
 git config user.email test@example.com
@@ -41,6 +51,28 @@ printf 'small\n' > small.txt
 git add small.txt
 run 0 bash "$pre_commit"
 git commit --quiet -m "test: add small file"
+
+no_lfs_bin="$tmpdir/no-lfs-bin"
+mkdir -p "$no_lfs_bin"
+ln -s "$(command -v bash)" "$no_lfs_bin/bash"
+ln -s "$(command -v git)" "$no_lfs_bin/git"
+ln -s "$(command -v stat)" "$no_lfs_bin/stat"
+run 0 env PATH="$no_lfs_bin" bash "$pre_commit"
+
+gitleaks_bin="$tmpdir/gitleaks-bin"
+mkdir -p "$gitleaks_bin"
+ln -s "$(command -v bash)" "$gitleaks_bin/bash"
+ln -s "$(command -v git)" "$gitleaks_bin/git"
+ln -s "$(command -v stat)" "$gitleaks_bin/stat"
+cat >"$gitleaks_bin/gitleaks" <<EOF
+#!/bin/sh
+printf '%s\n' "\$*" >>"$tmpdir/gitleaks.log"
+exit "\${GITLEAKS_EXIT:-0}"
+EOF
+chmod +x "$gitleaks_bin/gitleaks"
+run 0 env PATH="$gitleaks_bin" bash "$pre_commit"
+assert_file_contains "$tmpdir/gitleaks.log" "protect --staged --verbose --no-banner --no-color"
+run 42 env PATH="$gitleaks_bin" GITLEAKS_EXIT=42 bash "$pre_commit"
 
 rm small.txt
 git add small.txt

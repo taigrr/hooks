@@ -14,7 +14,10 @@ else
 fi
 
 IFS=$'\n'
-tracked=$(git lfs ls-files --name-only 2>/dev/null)
+tracked=
+if command -v git-lfs > /dev/null 2>&1; then
+	tracked=$(git lfs ls-files --name-only 2>/dev/null)
+fi
 hasLargeFile=false
 
 for file in $(git diff-index --cached --name-only "$against"); do
