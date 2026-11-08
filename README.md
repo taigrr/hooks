@@ -115,6 +115,7 @@ format on your commit messages:
 Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
 `ci`, `chore`, `revert`. Add `!` after the type/scope for breaking changes.
 
+Descriptions must contain at least one non-whitespace character.
 Merge commits and fixup/squash commits are always allowed.
 
 To disable this hook for a single commit:
