@@ -39,6 +39,8 @@ assert_rejected() {
 }
 
 run_hook 0 "feat: add checkout hook"
+run_hook 0 "docs:   clarify installation   "
+run_hook 0 $'fix: \tkeep a meaningful description'
 run_hook 0 "fix(shell/hooks): preserve lfs args"
 run_hook 0 "feat(api)!: change hook contract"
 run_hook 0 "Merge pull request #6 from taigrr/cd/clear-conflicting-hook-config"
@@ -48,5 +50,9 @@ run_hook 0 "squash! test(shell): add regression coverage"
 assert_rejected "update hook behavior"
 assert_rejected "feature: add checkout hook"
 assert_rejected "fix(shell):"
+assert_rejected "fix: "
+assert_rejected "fix(shell):    "
+assert_rejected $'feat(api)!: \t\t'
+assert_rejected $'docs: \t \r'
 
 echo "commit-msg regression tests passed"
