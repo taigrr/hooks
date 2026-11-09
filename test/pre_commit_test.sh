@@ -85,4 +85,25 @@ output=$(run 1 bash "$pre_commit")
 assert_contains "$output" "File large.bin is 6MiB"
 assert_contains "$output" "Commit too large"
 
+# The index, not unstaged edits or removal, determines committed size.
+printf 'small\n' > large.bin
+output=$(run 1 bash "$pre_commit")
+assert_contains "$output" "File large.bin is 6MiB"
+rm large.bin
+run 1 bash "$pre_commit"
+git add large.bin
+
+# A large unstaged version must not reject a small staged blob.
+printf 'small\n' > partial.bin
+git add partial.bin
+dd if=/dev/zero of=partial.bin bs=1M count=6 status=none
+run 0 bash "$pre_commit"
+
+# Git-quoted paths (spaces, newlines, and glob characters) remain literal.
+odd_path=$'odd space*\nfile.bin'
+dd if=/dev/zero of="$odd_path" bs=1M count=6 status=none
+git add "$odd_path"
+output=$(run 1 bash "$pre_commit")
+assert_contains "$output" "File $odd_path is 6MiB"
+
 echo "pre-commit regression tests passed"
