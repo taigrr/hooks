@@ -67,6 +67,10 @@ git clone https://github.com/taigrr/hooks.git ~/.git-hooks
 cd ~/.git-hooks && ./install.sh --template
 ```
 
+The installer builds `.template/hooks/` from the hook scripts and sets
+`init.templateDir` to `.template`. Re-run `./install.sh --template` after pulling
+updates to refresh the copies used for future repositories.
+
 > **Note:** Existing repos won't be affected.
 >
 > Running `./install.sh --template` clears an existing global `core.hooksPath`

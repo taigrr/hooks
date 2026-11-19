@@ -7,6 +7,7 @@
 set -euo pipefail
 
 hook_dir="$(cd "$(dirname "$0")" && pwd)"
+template_dir="$hook_dir/.template"
 use_template=false
 check_only=false
 
@@ -43,7 +44,7 @@ done
 
 if [ "$check_only" = true ]; then
 	hooks_path=$(git config --global --get core.hooksPath 2>/dev/null || true)
-	template_dir=$(git config --global --get init.templateDir 2>/dev/null || true)
+	configured_template=$(git config --global --get init.templateDir 2>/dev/null || true)
 	if [ -n "$hooks_path" ]; then
 		echo "core.hooksPath = $hooks_path"
 		if [ "$hooks_path" = "$hook_dir" ]; then
@@ -52,19 +53,19 @@ if [ "$check_only" = true ]; then
 			echo "  (points elsewhere — not this directory)"
 		fi
 	fi
-	if [ -n "$template_dir" ]; then
-		echo "init.templateDir = $template_dir"
-		if [ "$template_dir" = "$hook_dir" ]; then
+	if [ -n "$configured_template" ]; then
+		echo "init.templateDir = $configured_template"
+		if [ "$configured_template" = "$hook_dir" ] || [ "$configured_template" = "$hook_dir/.template" ]; then
 			echo "  (points to this directory)"
 		else
 			echo "  (points elsewhere — not this directory)"
 		fi
 	fi
-	if [ -z "$hooks_path" ] && [ -z "$template_dir" ]; then
+	if [ -z "$hooks_path" ] && [ -z "$configured_template" ]; then
 		echo "No global hooks configuration found."
 	fi
 	if [ "$use_template" = true ]; then
-		echo "Would set: init.templateDir = $hook_dir (and clear a matching core.hooksPath)"
+		echo "Would set: init.templateDir = $hook_dir/.template (and clear a matching core.hooksPath)"
 	else
 		echo "Would set: core.hooksPath = $hook_dir (and clear a matching init.templateDir)"
 	fi
@@ -80,7 +81,7 @@ clear_conflicting() {
 	if [ -z "$current" ]; then
 		return
 	fi
-	if [ "$current" = "$hook_dir" ]; then
+	if [ "$current" = "$hook_dir" ] || { [ "$key" = init.templateDir ] && [ "$current" = "$template_dir" ]; }; then
 		git config --global --unset "$key" >/dev/null 2>&1 || true
 		echo "Cleared global $key (it pointed to this directory)."
 	else
@@ -93,18 +94,25 @@ clear_conflicting() {
 # value, so the user can recover the overwritten path if it was intentional.
 set_hook_config() {
 	local key="$1"
+	local target="${2:-$hook_dir}"
 	local current
 	current=$(git config --global --get "$key" 2>/dev/null || true)
-	if [ -n "$current" ] && [ "$current" != "$hook_dir" ]; then
+	if [ -n "$current" ] && [ "$current" != "$target" ]; then
 		echo "WARNING: overwriting existing global $key = $current" >&2
 	fi
-	git config --global "$key" "$hook_dir"
+	git config --global "$key" "$target"
 }
 
 if [ "$use_template" = true ]; then
 	clear_conflicting core.hooksPath
-	set_hook_config init.templateDir
-	echo "Installed: init.templateDir set to $hook_dir"
+	# Git copies a template directory into .git, not directly into .git/hooks.
+	mkdir -p "$template_dir/hooks"
+	for hook in pre-commit commit-msg pre-push post-checkout post-commit post-merge; do
+		cp "$hook_dir/$hook" "$template_dir/hooks/$hook"
+		chmod +x "$template_dir/hooks/$hook"
+	done
+	set_hook_config init.templateDir "$template_dir"
+	echo "Installed: init.templateDir set to $template_dir"
 	echo "New repos created with git init/clone will copy these hooks."
 else
 	clear_conflicting init.templateDir

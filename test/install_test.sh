@@ -66,10 +66,20 @@ assert_unset core.hooksPath
 assert_unset init.templateDir
 
 output=$(run 0 bash "$install_script" --template)
-assert_contains "$output" "Installed: init.templateDir set to $repo_root"
+assert_contains "$output" "Installed: init.templateDir set to $repo_root/.template"
 template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
-[ "$template_dir" = "$repo_root" ]
+[ "$template_dir" = "$repo_root/.template" ]
 assert_unset core.hooksPath
+
+# Git copies template contents into .git, so hooks must be under hooks/.
+GIT_CONFIG_GLOBAL="$global_config" git init -q "$tmpdir/template-repo"
+for hook in pre-commit commit-msg pre-push post-checkout post-commit post-merge; do
+	cmp "$repo_root/$hook" "$tmpdir/template-repo/.git/hooks/$hook"
+	[ -x "$tmpdir/template-repo/.git/hooks/$hook" ]
+done
+[ ! -e "$tmpdir/template-repo/.git/install.sh" ]
+output=$(run 1 "$tmpdir/template-repo/.git/hooks/commit-msg" /dev/null)
+assert_contains "$output" "does not follow Conventional Commits"
 
 output=$(run 0 bash "$install_script")
 assert_contains "$output" "Installed: core.hooksPath set to $repo_root"
@@ -79,10 +89,10 @@ hooks_path=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get core.h
 assert_unset init.templateDir
 
 output=$(run 0 bash "$install_script" --template)
-assert_contains "$output" "Installed: init.templateDir set to $repo_root"
+assert_contains "$output" "Installed: init.templateDir set to $repo_root/.template"
 assert_contains "$output" "Cleared global core.hooksPath (it pointed to this directory)."
 template_dir=$(GIT_CONFIG_GLOBAL="$global_config" git config --global --get init.templateDir)
-[ "$template_dir" = "$repo_root" ]
+[ "$template_dir" = "$repo_root/.template" ]
 assert_unset core.hooksPath
 
 output=$(run 1 bash "$install_script" --bogus)
@@ -102,13 +112,19 @@ assert_contains "$output" "No global hooks configuration found for $repo_root."
 assert_set_to core.hooksPath /tmp/other-hooks
 assert_set_to init.templateDir /tmp/other-template
 
+# Legacy installations pointed init.templateDir at the repository root.
+GIT_CONFIG_GLOBAL="$global_config" git config --global init.templateDir "$repo_root"
+output=$(run 0 bash "$uninstall_script")
+assert_contains "$output" "Removed init.templateDir"
+assert_unset init.templateDir
+
 # Safety: a foreign core.hooksPath (not this dir) must be preserved, not clobbered.
 run 0 bash "$uninstall_script" >/dev/null
 GIT_CONFIG_GLOBAL="$global_config" git config --global core.hooksPath /tmp/other-hooks
 output=$(run 0 bash "$install_script" --template)
 assert_contains "$output" "WARNING: global core.hooksPath = /tmp/other-hooks is set and may conflict."
 assert_set_to core.hooksPath /tmp/other-hooks
-assert_set_to init.templateDir "$repo_root"
+assert_set_to init.templateDir "$repo_root/.template"
 run 0 bash "$uninstall_script" >/dev/null
 GIT_CONFIG_GLOBAL="$global_config" git config --global --unset core.hooksPath >/dev/null 2>&1 || true
 
