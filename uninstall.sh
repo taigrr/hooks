@@ -19,7 +19,7 @@ fi
 
 template_dir=$(git config --global --get init.templateDir 2>/dev/null || true)
 if [ -n "$template_dir" ]; then
-	if [ "$template_dir" = "$hook_dir" ]; then
+	if [ "$template_dir" = "$hook_dir" ] || [ "$template_dir" = "$hook_dir/.template" ]; then
 		git config --global --unset init.templateDir
 		echo "Removed init.templateDir"
 		found=true
